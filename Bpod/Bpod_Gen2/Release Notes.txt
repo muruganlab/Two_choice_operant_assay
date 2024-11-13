@@ -1,0 +1,76 @@
+---v1.63---
+-Fixed bug introduced in v1.62 - Previously, when the user navigated to a folder of protocols, the protocol path did not correctly update if the first protocol in the new folder was selected. This would result in data being saved into the folder for the previous protocol selected, with an the previously selected protocol in the file name.
+
+---v1.62---
+-Fixed crash issue with small (128-1024 sample) acquisition sessions in Analog Input firmware (requires firmware update)
+-Fixed issue with loop mode in WavePlayer firmware (requires firmware update)
+-Fixed rendering issues with TrialManager and Bpod Console on newer verisons of MATLAB
+-Fixed issue with default manual override panel's serial terminal handling of byte 255 (Contributed by Florian Rau in Poulet Lab @ MDC Berlin)
+-Added StateTiming plot (Contributed by Florian Rau in Poulet Lab @ MDC Berlin)
+-Fixed issue in Bpod Emulator handling of global counters
+-Fixed issue in Bpod Emulator handling of conditions
+-Fixed issue with Rotary Encoder class - a confirmation byte is received on setting current position
+-Added Farenheit readout to ambient module read function
+-Added support for HiFi Module (beta) with example protocols
+-Added PCLink example code for Teensy Shield (this is one way for the state machine to relay bytes to a separate PC)
+
+---v1.61---
+-Added warning (to command window) when TrialManager detects inter-trial intervals longer than 200 microseconds (e.g. if inter-trial code took longer than 1 trial duration to complete)
+-Fixed bug where LoadSerialMessages() did not accept third argument for message index
+-Updated comments in example protocols, and to include usage of NewStateMachine() instead of deprecated NewStateMatrix()
+-Set default precision of timestamps returned by TrialManager to 0.1ms
+-Added example Python code for Bpod Raspberry Pi Shim. The example runs an 'echo module' as per example Arduino and Teensy firmware. Comments in the example file are important for setup.
+-Added compatability fixes to TeensySoundServer plugin. Please note that TeensySoundServer is deprecated, and new projects should use TeensyAudioPlayer instead (see /Modules/ folder).
+
+---v1.60---
+-Optimized TrialManagerObject handling of rapid event streams
+-Updated support for CCU's HARP sound card
+-Added class for showing single frames on a second monitor using PsychToolbox (interfaced with the state machine using soft codes)
+
+---v1.59---
+-Added UI fixes for MATLAB r2018b and Ubuntu 18
+-Added new PsychToolboxAudio plugin, to improve on PsychToolboxSoundServer with an improved interface. PsychToolboxSoundServer is still supported.
+-Updated PsychToolboxAudio and PsychToolboxSoundServer plugins to support HTOmega FENIX and ASUS Xonar AE sound cards 
+-Updated PsychToolboxAudio and PsychToolboxSoundServer plugins to support WASAPI interface (ASIO is used by default if it is detected)
+-Added implicit programming of serial messages, e.g. in OutputActions, {'MyModule', ['P' 4 2]} is now valid (though not if used with TrialManager)
+-Changed saving option from -v6 to standard (this is actually faster in MATLAB r2018+ and similar in r2013-2018)
+-Added notification and instructions if user has Xonar DX or DSX on Windows without ASIO
+-Added echo module example firmware for Adafruit Metro M4 (for use with Bpod Arduino Shield)
+-Updated GUI font to courier, removed font installation requirement
+-Added preliminary interface to Champalimaud Hardware Platform's HARP sound card (note: this is an alpha release and has known issues)
+-Changed timing precision of rotary encoder module (REM) from ms to us (requires REM firmware update to v5)
+-Added plugin to interface with Pololu Maestro servo controller (can be used to trigger servo motors with soft codes)
+-Added class for Ethernet module to act as a TCP server and relay incoming bytes from clients to state machine (requires Ethernet module firmware swap)
+-Added support for sound calibration with NI USB-6211 and Bruel&Kjaer Nexus Condition amp + microphone (requires Data Acqusition Toolbox)
+
+---v1.58---
+-Added software to keep MATLAB software current: UpdateBpodSoftware(). Currently requires Win7 or Win10 with MATLAB r2014b+
+-Added firmware update app to keep Bpod firmware current: UpdateBpodFirmware(). Currently requires Win7 or Win10.
+-Fixed axes display in TrialTypeOutcomePlot plugin
+-Minor optimization to AddState() function (now uses prepared vectors instead of ones() and zeros() to populate defaults)
+-Removed drawnow() from update method of BpodParameterGUI to reduce inter-trial dead-time on MATLAB versions newer than r2014b
+-Fixed a bug in TrialManager() that would cause crashes when state names varied between trials
+-Disabled PhoneHome transmissions on boot and protocol-start (to resume once Sanworks has a 100% reliable web host)
+
+---v1.57---
+-Fixes to analog input module class (+matching fixes to its firmware repository), fix streaming to scope UI at sampling rates >1kHz
+
+---v1.56---
+-Updated current state machine firmware to v21 (optimizations for state machine r2)
+-Added support for Bpod port array module
+-Updated rotary encoder class with several bug-fixes, support for 8 thresholds and support for capturing + timestamping state machine byte codes
+-Updated BControl patch to improve handling of laggy USB serial buffers on some systems
+
+---v1.55---
+-Fixed SSL handshake bug in PhoneHome program (CRITICAL)
+-Enabled rotary encoder module to log and timestamp bytes from state machine
+-Added 'unipolar' mode to rotary encoder module, for treadmill assays
+-Restored display of automatically changing parameters in BpodParameterGUI
+-Updated serial interface syntax used to relay Bonsai soft codes
+-Updated BControl patch to handle pausing and sound server reset following a MATLAB force-quit
+
+---v1.54---
+-Added Ethernet Module support with PsychToolbox (previously req. Instrument Ctrl Tlbx)
+-Added in-trial pause support to BControl patch
+-In BControl patch, added ability to list channels in any order in settings_custom.conf
+-In BControl patch, added ability to loop sounds on sound server (vs. looping sched. wave)
