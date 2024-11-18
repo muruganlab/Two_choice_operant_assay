@@ -1,5 +1,8 @@
 # Two_choice_operant_assay repository
 
+! [Description](Images/operantAssayImage.png)
+
+
 The two choice operant assay designed in the Murugan lab at Emory is a self-paced, automated social-sucrose operant assay in which mice are trained to associate two separate choice ports with access to either a sucrose reward or a same sex conspecific (social reward) ([Isaac et al.,2024](https://www.nature.com/articles/s41467-024-52294-6#Sec10))
 
 The operant arena (12 in x 12 in x 12 in) is set up with two nose poke choice ports on one wall(Product ID: 1009, Sanworks Bpod). The reward zones are on the adjacent walls such that the social reward zone is on the wall furthest from its associated choice port and the sucrose reward zone is on the wall furthest from its associated choice port. The social reward zone consists of a square (2 in x 2 in) opening in the acrylic box covered by an automatic metal gate powered by a stepper motor connected to an Arduino microprocessor. A social target box (3 in x 3 in x 3 in) with one side covered in metal bars is positioned behind the automatic gate to permit investigation of the social target by the experimental mouse when the gate is opened. The sucrose reward zone consists of a reward port connected to a valve (Product ID: 1009, Sanworks Bpod) that is attached to a sucrose reservoir. 
