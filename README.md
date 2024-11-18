@@ -1,7 +1,6 @@
 # Two_choice_operant_assay repository
 
-! ([https://github.com/muruganlab/Two_choice_operant_assay/Images/operantAssayImage.png](https://github.com/muruganlab/Two_choice_operant_assay/tree/main/Images))
-
+![Schematic of the assay](Images/operantAssayImage.png)
 
 The two choice operant assay designed in the Murugan lab at Emory is a self-paced, automated social-sucrose operant assay in which mice are trained to associate two separate choice ports with access to either a sucrose reward or a same sex conspecific (social reward) ([Isaac et al.,2024](https://www.nature.com/articles/s41467-024-52294-6#Sec10))
 
