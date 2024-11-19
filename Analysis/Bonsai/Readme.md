@@ -1,6 +1,6 @@
 # Bonsai pipeline for 2D behavioral tracking
 
-![Schematic of the pipeline](Images/bonsaipipeline.png)
+![Schematic of the pipeline](../../Images/bonsaipipeline.png)
 
 An overview of the behavioral tracking pipeline implemented with Bonsai [Lopes et al.,2015](https://pmc.ncbi.nlm.nih.gov/articles/PMC4389726/). Numbered labels describe the step-by-step implementation of the pipeline. 
 
