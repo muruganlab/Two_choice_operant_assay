@@ -1,4 +1,17 @@
-function SinglePort
+%
+% OpposingPort.m
+% The opposing port protocol is the 3rd stage where mice are trained to
+% nose-poke a different choice port on the adjacent wall of the operant
+% assay to receive a sucrose reward at the reward port. The following is 
+% the configuration of ports designed for the protocol - 
+% Port 1 - Sucrose choice port 
+% Port 2 - Sucrose reward port (Optional, Port 4 if two Bpod configurations
+% are implemented)
+% (Optional) BNC output channel 2 - Timed TTL pulses to signal optogenetic
+% stimulation during reward consumption or send timed pulses during the
+% start of a trial 
+% 
+function OpposingPort
 global BpodSystem S
 
 %% Setup (runs once before the first trial)
@@ -10,6 +23,7 @@ BpodSystem.ProtocolSettings = S; % Creates a settings file chosen in launch mana
 currentTrialFig = [];
 numTrialsWaterPokes = [];
 numTrialsPokeFails = [];
+numTrialsLateWaterReward = [];
 BpodSystem.Status.Pause = 1;
 HandlePauseCondition;
 a = 0;
@@ -43,6 +57,7 @@ if BpodSystem.Status.BeingUsed == 1
         'FontName',BpodSystem.GUIHandles.FontName,...
         'FontWeight','Bold');
     markerPlotWater = {};
+    markerPlotLate = {};
     markerPlotFail = {};
     %% Main loop (runs once per trial)
     while CurrentTrial <= MaxTrials
@@ -56,11 +71,14 @@ if BpodSystem.Status.BeingUsed == 1
             RemainingSessionTime = GlobalTimeLimit;
             if(S.GUI.Basic.RecordingType==3)
                 S.GUI.Results.StimWaterPokes = 0;
+                S.GUI.Results.StimLateWaterReward = 0;
                 S.GUI.Results.StimPokeFails = 0;
             end
             numTrialsWaterPokes = vertcat(numTrialsWaterPokes,S.GUI.Results.WaterPokes);
+            numTrialsLateWaterReward = vertcat(numTrialsLateWaterReward,S.GUI.Results.LateWaterReward);
             numTrialsPokeFails = vertcat(numTrialsPokeFails,S.GUI.Results.PokeFails);
             markerPlotWater = vertcat(markerPlotWater,"None");
+            markerPlotLate = vertcat(markerPlotLate,"None");
             markerPlotFail = vertcat(markerPlotFail,"None");
         else
             if OptoArray(CurrentTrial) <= S.GUI.StimulationParameters.OptoTrialPercentage
@@ -90,14 +108,7 @@ if BpodSystem.Status.BeingUsed == 1
                 ValveUse = 'Valve4';
                 PWMUse = 'PWM4';
                 PortIn = 'Port4In';
-            end           
-            
-            if CurrentTrial > 5
-                rewardTimerForTrial = S.GUI.Settings.RewardTimeLimitSecs;
-            else
-                rewardTimerForTrial = S.GUI.Settings.SessionLengthMins * 60;
-            end        
-            
+            end
             %--- Assemble state machine
             sma = NewStateMachine();
             %This is a timer tracking total session time left in order to end the
@@ -155,31 +166,31 @@ if BpodSystem.Status.BeingUsed == 1
             if(S.GUI.StimulationParameters.CurrentTrialStim==1)
                 sma = AddState(sma, 'Name', 'EnforcePortClear', ...
                     'Timer', 3, ...
-                    'StateChangeConditions', {PortIn, 'RefreshPortClear','Tup', 'PokePrimeStim', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                    'StateChangeConditions', {'Port1In', 'RefreshPortClear', 'Port3In', 'RefreshPortClear', 'Tup', 'PokePrimeStim', 'GlobalTimer1_End', 'SessionEnd'}, ...
                     'OutputActions', {});
                 sma = AddState(sma, 'Name', 'RefreshPortClear', ...
                     'Timer', 0, ...
-                    'StateChangeConditions', {PortIn, 'EnforcePortClear','EnforcePortClear', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                    'StateChangeConditions', {'Port1Out', 'EnforcePortClear', 'Port3Out', 'EnforcePortClear', 'GlobalTimer1_End', 'SessionEnd'}, ...
                     'OutputActions', {});
                 sma = AddState(sma, 'Name', 'PokePrimeStim', ...
-                    'Timer', rewardTimerForTrial, ...
-                    'StateChangeConditions', {'Tup', 'PokeFail', PortIn, 'SuccessSignal1Stim', 'GlobalTimer1_End', 'SessionEnd'}, ...
-                    'OutputActions', {PWMUse, 255});
+                    'Timer', MaxTrialLength, ...
+                    'StateChangeConditions', {'Tup', 'TrialEnd', 'Port1In', 'SuccessSignal1Stim', 'Port3In', 'PokeFail', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                    'OutputActions', {'PWM1', 255});
             else
                 sma = AddState(sma, 'Name', 'EnforcePortClear', ...
                     'Timer', 3, ...
-                    'StateChangeConditions', {PortIn, 'RefreshPortClear', 'Tup', 'PokePrimeNoStim', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                    'StateChangeConditions', {'Port1In', 'RefreshPortClear', 'Port3In', 'RefreshPortClear', 'Tup', 'PokePrimeNoStim', 'GlobalTimer1_End', 'SessionEnd'}, ...
                     'OutputActions', {});
                 sma = AddState(sma, 'Name', 'RefreshPortClear', ...
                     'Timer', 0, ...
-                    'StateChangeConditions', {PortIn, 'EnforcePortClear', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                    'StateChangeConditions', {'Port1Out', 'EnforcePortClear', 'Port3Out', 'EnforcePortClear', 'GlobalTimer1_End', 'SessionEnd'}, ...
                     'OutputActions', {});
                 sma = AddState(sma, 'Name', 'PokePrimeNoStim', ...
-                    'Timer', rewardTimerForTrial, ...
-                    'StateChangeConditions', {'Tup', 'PokeFail', PortIn, 'SuccessSignal1','GlobalTimer1_End', 'SessionEnd'}, ...
-                    'OutputActions', {PWMUse, 255});
+                    'Timer', MaxTrialLength, ...
+                    'StateChangeConditions', {'Tup', 'TrialEnd', 'Port1In', 'SuccessSignal1', 'Port3In', 'PokeFail', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                    'OutputActions', {'PWM1', 255});
                 if(S.GUI.Basic.RecordingType==2)
-                    sma = EditState(sma,'PokePrimeNoStim','OutputActions', {'GlobalTimerTrig', 2});
+                    sma = EditState(sma,'PokePrimeNoStim','OutputActions', {'BNC2', 1});
                 end
             end
             %SuccessSignals A-F and 1-6 rapidly flash LEDs off and on the chosen port to
@@ -196,7 +207,7 @@ if BpodSystem.Status.BeingUsed == 1
             sma = AddState(sma, 'Name', 'SuccessSignal2', ...
                 'Timer', 0.1, ...
                 'StateChangeConditions', {'Tup', 'SuccessSignal3', 'GlobalTimer1_End', 'SessionEnd'}, ...
-                'OutputActions', {PWMUse, 255});
+                'OutputActions', {'PWM1', 255});
             sma = AddState(sma, 'Name', 'SuccessSignal3', ...
                 'Timer', 0.1, ...
                 'StateChangeConditions', {'Tup', 'SuccessSignal4', 'GlobalTimer1_End', 'SessionEnd'}, ...
@@ -204,20 +215,24 @@ if BpodSystem.Status.BeingUsed == 1
             sma = AddState(sma, 'Name', 'SuccessSignal4', ...
                 'Timer', 0.1, ...
                 'StateChangeConditions', {'Tup', 'SuccessSignal5', 'GlobalTimer1_End', 'SessionEnd'}, ...
-                'OutputActions', {PWMUse, 255});
+                'OutputActions', {'PWM1', 255});
             sma = AddState(sma, 'Name', 'SuccessSignal5', ...
                 'Timer', 0.1, ...
                 'StateChangeConditions', {'Tup', 'SuccessSignal6', 'GlobalTimer1_End', 'SessionEnd'}, ...
                 'OutputActions', {});
+            
             sma = AddState(sma, 'Name', 'SuccessSignal6', ...
                 'Timer', 0.1, ...
-                'StateChangeConditions', {'Tup', 'Reward', 'GlobalTimer1_End', 'SessionEnd'}, ...
-                'OutputActions', {PWMUse, 255});
-            
+                'StateChangeConditions', {'Tup', 'RewardIndicator', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                'OutputActions', {'PWM1', 255});
             
             %RewardIndicator turns out the LED of a water reward port, that when
             %poked in time administers the water reward
             
+            sma = AddState(sma, 'Name', 'RewardIndicator', ...
+                'Timer', S.GUI.Settings.RewardTimeLimitSecs, ...
+                'StateChangeConditions', {PortIn, 'Reward', 'Tup', 'WaterRewardFail', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                'OutputActions', {PWMUse, 255});
             if(S.GUI.StimulationParameters.CurrentTrialStim==1 && S.GUI.Basic.RecordingType==3)
                 sma = AddState(sma, 'Name', 'Reward', ...
                     'Timer', ValveTime, ...
@@ -234,6 +249,10 @@ if BpodSystem.Status.BeingUsed == 1
                     'OutputActions', {ValveUse, true, PWMUse, 255});
             end
             sma = AddState(sma, 'Name', 'PokeFail', ...
+                'Timer', 0, ...
+                'StateChangeConditions', {'Tup', 'Standby', 'GlobalTimer1_End', 'SessionEnd'}, ...
+                'OutputActions', {});
+            sma = AddState(sma, 'Name', 'WaterRewardFail', ...
                 'Timer', 0, ...
                 'StateChangeConditions', {'Tup', 'Standby', 'GlobalTimer1_End', 'SessionEnd'}, ...
                 'OutputActions', {});
@@ -270,8 +289,13 @@ if BpodSystem.Status.BeingUsed == 1
                 return
             end
             markerPlotWater = vertcat(markerPlotWater,"None");
+            markerPlotLate = vertcat(markerPlotLate,"None");
             markerPlotFail = vertcat(markerPlotFail,"None");
             if(S.GUI.StimulationParameters.CurrentTrialStim==1 && S.GUI.Basic.RecordingType==3)
+                if (~isnan(BpodSystem.Data.RawEvents.Trial{CurrentTrial}.States.WaterRewardFail(1)))
+                    S.GUI.Results.StimLateWaterReward = S.GUI.Results.StimLateWaterReward + 1;
+                    markerPlotLate(end) = "*";
+                end
                 if (~isnan(BpodSystem.Data.RawEvents.Trial{CurrentTrial}.States.Reward(1)))
                     S.GUI.Results.StimWaterPokes = S.GUI.Results.StimWaterPokes + 1;
                     markerPlotWater(end) = "*";
@@ -281,6 +305,10 @@ if BpodSystem.Status.BeingUsed == 1
                     markerPlotFail(end) = "*";
                 end
             else
+                if (~isnan(BpodSystem.Data.RawEvents.Trial{CurrentTrial}.States.WaterRewardFail(1)))
+                    S.GUI.Results.LateWaterReward = S.GUI.Results.LateWaterReward + 1;
+                    markerPlotLate(end) = "o";
+                end
                 if (~isnan(BpodSystem.Data.RawEvents.Trial{CurrentTrial}.States.Reward(1)))
                     S.GUI.Results.WaterPokes = S.GUI.Results.WaterPokes + 1;
                     markerPlotWater(end) = "o";
@@ -290,15 +318,15 @@ if BpodSystem.Status.BeingUsed == 1
                     markerPlotFail(end) = "o";
                 end
             end
-            
             if(S.GUI.Basic.RecordingType==3)
+                numTrialsLateWaterReward = vertcat(numTrialsLateWaterReward,S.GUI.Results.LateWaterReward+S.GUI.Results.StimLateWaterReward);
                 numTrialsWaterPokes = vertcat(numTrialsWaterPokes,S.GUI.Results.WaterPokes+S.GUI.Results.StimWaterPokes);
                 numTrialsPokeFails = vertcat(numTrialsPokeFails,S.GUI.Results.PokeFails+S.GUI.Results.StimPokeFails);
             else
+                numTrialsLateWaterReward = vertcat(numTrialsLateWaterReward,S.GUI.Results.LateWaterReward);
                 numTrialsWaterPokes = vertcat(numTrialsWaterPokes,S.GUI.Results.WaterPokes);
                 numTrialsPokeFails = vertcat(numTrialsPokeFails,S.GUI.Results.PokeFails);
-            end       
-            
+            end
             CurrentTrial = CurrentTrial + 1;
             S.GUI.Results.CurrentTrialNumber = CurrentTrial;
             %Checks time after trial and compares to starting time to update
@@ -313,35 +341,42 @@ if BpodSystem.Status.BeingUsed == 1
                 break
             end
         end
+        % Plotting in-progress results after each trial
         currentTrialFig = vertcat(currentTrialFig,CurrentTrial-1);
         stair1 = stairs(axs,currentTrialFig,numTrialsWaterPokes,...
             'Linestyle','-','Color',color2);
         hold(axs,'on');
-        stair2 = stairs(axs,currentTrialFig,numTrialsPokeFails,...
+        stair2 = stairs(axs,currentTrialFig,numTrialsLateWaterReward,...
+            'Linestyle','-','Color',color1);
+        hold(axs,'on');
+        stair3 = stairs(axs,currentTrialFig,numTrialsPokeFails,...
             'Linestyle','-','Color',color3);
         hold(axs,'on');
         for count=1:length(currentTrialFig)
             scatter(axs,currentTrialFig(count),numTrialsWaterPokes(count),markersize+40,'MarkerFaceColor',color2,...
                 'MarkerEdgeColor',color2,'Marker',markerPlotWater(count),'HandleVisibility','off');
             hold(axs,'on');
+            scatter(axs,currentTrialFig(count),numTrialsLateWaterReward(count),markersize+40,'MarkerFaceColor',color1,...
+                'MarkerEdgeColor',color1,'Marker',markerPlotLate(count),'HandleVisibility','off');
+            hold(axs,'on');
             scatter(axs,currentTrialFig(count),numTrialsPokeFails(count),markersize+40,'MarkerFaceColor',color3,...
                 'MarkerEdgeColor',color3,'Marker',markerPlotFail(count),'HandleVisibility','off');
             hold(axs,'on');
         end
-        legend(axs,'hide');
         axP = get(axs,'Position');
-        legend(axs,[stair1,stair2],"Successful Water Pokes",...
-            "Poke Fails",'FontName',...
+        legend(axs,'hide');
+        legend(axs,[stair1,stair2,stair3],"Successful Water Pokes",...
+            "Late Water Reward","Poke Fails",'FontName',...
             BpodSystem.GUIHandles.FontName,'Location',...
             'northeastoutside','FontSize',axs.XLabel.FontSize-1);
-        legend(axs,'boxoff');
+        legend(axs,'boxoff');         
         refreshdata(axs);
         drawnow;
         box(axs,'off');
         axP(1) = 0.07;
         set(axs, 'Position', axP)
         if(mod(CurrentTrial,incrementVals)==0)
-            maxValue = max(max([numTrialsWaterPokes,numTrialsPokeFails]));
+            maxValue = max(max([numTrialsWaterPokes,numTrialsPokeFails,numTrialsLateWaterReward]));
             xVal = CurrentTrial+incrementVals;
             yVal = maxValue+incrementVals;
         end

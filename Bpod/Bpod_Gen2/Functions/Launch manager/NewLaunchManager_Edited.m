@@ -1,3 +1,7 @@
+%
+% This code has edits added by the Murugan Lab at Emory University 
+% to design graphical user interface elements for the two choice operant
+% assay protocols. 
 %{
 ----------------------------------------------------------------------------
 

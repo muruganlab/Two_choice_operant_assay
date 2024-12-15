@@ -1,3 +1,8 @@
+%
+% dialogBoxSettingsFile.m
+% Custom written GUI function to choose the parameters for the two
+% choice operant assay protocols. 
+%
 function dialogBoxSettingsFile
 global BpodSystem S
 %%
@@ -271,7 +276,7 @@ BpodSystem.GUIHandles.inProgressFig = figure('Position',[postionOfDialogBox(1)+2
 thisFig = BpodSystem.GUIHandles.inProgressFig;
 set(gcf,'color','w');
 axis('off');
-titleString = ["Subject: "+BpodSystem.GUIData.SubjectName+" , Protocol: "+BpodSystem.GUIData.ProtocolName+" , Recoding type: "+S.GUI.Basic.RecordingTypeName];
+titleString = ["Subject: "+BpodSystem.GUIData.SubjectName+" , Protocol: "+BpodSystem.GUIData.ProtocolName+" , Recording type: "+S.GUI.Basic.RecordingTypeName];
 annotation(thisFig,'line', [0.02, 0.02], [0.02, 0.98], 'LineWidth', 1, 'Color', 'k');
 annotation(thisFig,'line', [0.98, 0.98], [0.02, 0.98], 'LineWidth', 1, 'Color', 'k');
 annotation(thisFig,'line', [0.02, 0.98], [0.02, 0.02], 'LineWidth', 1, 'Color', 'k');

@@ -1,3 +1,19 @@
+%
+% TwoChoice.m
+% The twochoice operant protocol is the 4th and final stage of the training
+% designed for mice to associate nose poking one of two behavioral ports 
+% with a sucrose reward and the other port to open an automated gate to
+% interact with a novel social target animal. The following is the
+% configuration of ports designed for the protocol - 
+% Port 1 - Sucrose choice port 
+% Port 2 - Sucrose reward port (Optional, Port 4 if two Bpod configurations
+% are implemented)
+% Port 3 - Social choice port
+% BNC output channel 1 - Social gate assembly
+% (Optional) BNC output channel 2 - Timed TTL pulses to signal optogenetic
+% stimulation during reward consumption or send timed pulses during the
+% start of a trial 
+% 
 function TwoChoice
 global BpodSystem S
 %% Setup (runs once before the first trial)
@@ -180,7 +196,7 @@ if BpodSystem.Status.BeingUsed == 1
                     'GlobalTimer1_End', 'SessionEnd'}, ...
                     'OutputActions', {sucrosePort,255,socialPort,255});
                 if(S.GUI.Basic.RecordingType==2)
-                    sma = EditState(sma,'PokePrimeNoStim','OutputActions', {'GlobalTimerTrig', 2});
+                    sma = EditState(sma,'PokePrimeNoStim','OutputActions', {'BNC2',1});
                 end
             end
             %SuccessSignals A-F and 1-6 rapidly flash LEDs off and on the chosen port to
@@ -245,10 +261,7 @@ if BpodSystem.Status.BeingUsed == 1
             sma = AddState(sma, 'Name', 'SuccessSignalF', ...
                 'Timer', 0.1, ...
                 'StateChangeConditions', {'Tup', 'SocialReward', 'GlobalTimer1_End', 'SessionEnd'}, ...
-                'OutputActions', {socialPort, 255});
-            
-            
-            
+                'OutputActions', {socialPort, 255});            
             
             %RewardIndicator turns out the LED of a water reward port, that when
             %poked in time administers the water reward
@@ -307,7 +320,6 @@ if BpodSystem.Status.BeingUsed == 1
             if ~isempty(fieldnames(RawEvents)) % If you didn't stop the session manually mid-trial
                 BpodSystem.Data = AddTrialEvents(BpodSystem.Data,RawEvents); % Adds raw events to a human-readable data struct
                 BpodSystem.Data.TrialSettings(CurrentTrial) = S; % Adds the settings used for the current trial to the Data struct (to be saved after the trial ends)
-                %%BpodSystem.Data.Metadata =
                 SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
             end
             
@@ -364,11 +376,12 @@ if BpodSystem.Status.BeingUsed == 1
             TimePassedDuringSession = CurrentTrialTimeSecs - InitialSessionTimeSecs;
             RemainingSessionTime = GlobalTimeLimit - TimePassedDuringSession;
             if RemainingSessionTime <= 0
-                savefig(BpodSystem.Path.CurrentDataFileFig);
+                savefig(thisFig,BpodSystem.Path.CurrentDataFileFig);
                 saveas(thisFig,BpodSystem.Path.CurrentDataFileFig(1:end-4),'png');
                 break
             end
         end
+        % Plotting in-progress results after each trial
         currentTrialFig = vertcat(currentTrialFig,CurrentTrial-1);
         stair1 = stairs(axs,currentTrialFig,numTrialsWaterPokes,...
             'Linestyle','-','Color',color2);
